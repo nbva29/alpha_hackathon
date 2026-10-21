@@ -1,0 +1,6 @@
+# Local Alfa-Bank design system reference and packages
+/.local/alfa-styles/
+
+# Frontend install and build outputs
+/frontend/node_modules/
+/frontend/dist/

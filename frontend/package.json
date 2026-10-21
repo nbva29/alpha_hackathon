@@ -1,0 +1,23 @@
+{
+  "name": "alfa-hack-credit-cabinet-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "test": "node --experimental-strip-types --test src/mock-api.test.ts",
+    "format": "prettier --write src/main.tsx src/App.tsx src/app src/components src/pages src/lib"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3",
+    "vite": "6.4.4"
+  },
+  "dependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  }
+}
