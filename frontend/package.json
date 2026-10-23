@@ -7,7 +7,8 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "test": "node --experimental-strip-types --test src/mock-api.test.ts",
-    "format": "prettier --write src/main.tsx src/App.tsx src/app src/components src/pages src/lib"
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"*.html\" \"*.ts\" \"*.yaml\" \"package.json\" \"tsconfig.json\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"*.html\" \"*.ts\" \"*.yaml\" \"package.json\" \"tsconfig.json\""
   },
   "devDependencies": {
     "@types/react": "19.3.0",

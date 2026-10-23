@@ -1,14 +1,9 @@
-import {
-  products,
-  evaluateProduct,
-  monthlyPayment,
-  type Product,
-} from "../mock-api";
-import { productById, rub } from "../lib/format";
-import { useApp, useWorkspace } from "../app/context";
-import { Button, Icon, Intro } from "../components/ui";
-import { Wizard } from "../components/Wizard";
-import { OfferCard } from "../components/OfferCard";
+import { products, evaluateProduct, monthlyPayment, type Product } from '../mock-api';
+import { productById, rub } from '../lib/format';
+import { useApp, useWorkspace } from '../app/context';
+import { Button, Icon, Intro } from '../components/ui';
+import { Wizard } from '../components/Wizard';
+import { OfferCard } from '../components/OfferCard';
 
 export function CatalogPage() {
   const { need, selected, setSelected, go } = useApp();
@@ -16,9 +11,7 @@ export function CatalogPage() {
   const scored = products
     .map((product) => ({ product, ...evaluateProduct(product, need, company) }))
     .sort((a, b) => Number(b.fits) - Number(a.fits));
-  const compared = selected
-    .map(productById)
-    .filter((value): value is Product => Boolean(value));
+  const compared = selected.map(productById).filter((value): value is Product => Boolean(value));
   const best =
     compared.length > 1
       ? compared
@@ -36,7 +29,7 @@ export function CatalogPage() {
         title="Подходящие решения"
         subtitle={`Нашли ${scored.filter((item) => item.fits).length} из ${products.length} демопредложений для вашей задачи.`}
         side={
-          <Button variant="outline" onClick={() => go("need")}>
+          <Button variant="outline" onClick={() => go('need')}>
             <Icon name="back" size={16} /> Изменить параметры
           </Button>
         }
@@ -60,10 +53,7 @@ export function CatalogPage() {
       <div className="section-head">
         <div>
           <h2>Каталог предложений</h2>
-          <p>
-            Синтетические условия для демонстрации; не являются действующими
-            ставками банка
-          </p>
+          <p>Синтетические условия для демонстрации; не являются действующими ставками банка</p>
         </div>
         <span className="result-count">{products.length} предложений</span>
       </div>
@@ -89,11 +79,7 @@ export function CatalogPage() {
                 </p>
               )}
             </div>
-            <button
-              type="button"
-              className="text-button"
-              onClick={() => setSelected([])}
-            >
+            <button type="button" className="text-button" onClick={() => setSelected([])}>
               Очистить
             </button>
           </div>
@@ -106,7 +92,7 @@ export function CatalogPage() {
                     <th
                       key={item.id}
                       scope="col"
-                      className={best?.id === item.id ? "compare-best" : undefined}
+                      className={best?.id === item.id ? 'compare-best' : undefined}
                     >
                       {item.name}
                       {best?.id === item.id && (
@@ -124,11 +110,9 @@ export function CatalogPage() {
                     return (
                       <td
                         key={item.id}
-                        className={best?.id === item.id ? "compare-best" : undefined}
+                        className={best?.id === item.id ? 'compare-best' : undefined}
                       >
-                        {evaluation.fits
-                          ? "Подходит"
-                          : evaluation.reasons.join(", ")}
+                        {evaluation.fits ? 'Подходит' : evaluation.reasons.join(', ')}
                       </td>
                     );
                   })}
@@ -136,10 +120,7 @@ export function CatalogPage() {
                 <tr>
                   <td>Ставка</td>
                   {compared.map((item) => (
-                    <td
-                      key={item.id}
-                      className={best?.id === item.id ? "compare-best" : undefined}
-                    >
+                    <td key={item.id} className={best?.id === item.id ? 'compare-best' : undefined}>
                       {item.rate}%
                     </td>
                   ))}
@@ -147,10 +128,7 @@ export function CatalogPage() {
                 <tr>
                   <td>Диапазон суммы</td>
                   {compared.map((item) => (
-                    <td
-                      key={item.id}
-                      className={best?.id === item.id ? "compare-best" : undefined}
-                    >
+                    <td key={item.id} className={best?.id === item.id ? 'compare-best' : undefined}>
                       {rub(item.min)} – {rub(item.max)}
                     </td>
                   ))}
@@ -158,10 +136,7 @@ export function CatalogPage() {
                 <tr>
                   <td>Срок</td>
                   {compared.map((item) => (
-                    <td
-                      key={item.id}
-                      className={best?.id === item.id ? "compare-best" : undefined}
-                    >
+                    <td key={item.id} className={best?.id === item.id ? 'compare-best' : undefined}>
                       {item.minTerm}–{item.maxTerm} мес.
                     </td>
                   ))}
@@ -169,10 +144,7 @@ export function CatalogPage() {
                 <tr>
                   <td>Ориентир платежа</td>
                   {compared.map((item) => (
-                    <td
-                      key={item.id}
-                      className={best?.id === item.id ? "compare-best" : undefined}
-                    >
+                    <td key={item.id} className={best?.id === item.id ? 'compare-best' : undefined}>
                       {rub(monthlyPayment(need.amount, item.rate, need.term))}
                     </td>
                   ))}
@@ -180,10 +152,7 @@ export function CatalogPage() {
                 <tr>
                   <td>Доп. условия</td>
                   {compared.map((item) => (
-                    <td
-                      key={item.id}
-                      className={best?.id === item.id ? "compare-best" : undefined}
-                    >
+                    <td key={item.id} className={best?.id === item.id ? 'compare-best' : undefined}>
                       {item.extras}
                     </td>
                   ))}

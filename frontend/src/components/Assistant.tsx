@@ -1,7 +1,7 @@
-import { createContext, useContext } from "react";
-import { useWorkspace } from "../app/context";
-import { rub } from "../lib/format";
-import { Icon } from "./ui";
+import { createContext, useContext } from 'react';
+import { useWorkspace } from '../app/context';
+import { rub } from '../lib/format';
+import { Icon } from './ui';
 
 export const AssistantContext = createContext<() => void>(() => {});
 export function AssistantToggle() {
@@ -16,16 +16,16 @@ export function Assistant({ close }: { close: () => void }) {
   const company = useWorkspace().company;
   const questions = [
     [
-      "Какие есть продукты?",
-      "В каталоге шесть демопредложений: кредиты на развитие, оборотные средства и овердрафты. Выберите цель и сумму, чтобы увидеть подходящие варианты.",
+      'Какие есть продукты?',
+      'В каталоге шесть демопредложений: кредиты на развитие, оборотные средства и овердрафты. Выберите цель и сумму, чтобы увидеть подходящие варианты.',
     ],
     [
-      "Какие данные нужны?",
-      "Для заявки нужны сведения о компании, цель, сумма, срок и документ по правилам выбранного предложения.",
+      'Какие данные нужны?',
+      'Для заявки нужны сведения о компании, цель, сумма, срок и документ по правилам выбранного предложения.',
     ],
     [
-      "Что означает статус?",
-      "Статус показывает текущий этап обработки. История всех переходов находится в деталях заявки.",
+      'Что означает статус?',
+      'Статус показывает текущий этап обработки. История всех переходов находится в деталях заявки.',
     ],
   ];
   return (
@@ -53,8 +53,8 @@ export function Assistant({ close }: { close: () => void }) {
           <div className="assistant-bubble">
             <strong>Привет! 👋</strong>
             <p>
-              Помогу сориентироваться в кредитном кабинете. Ответы основаны на
-              демоданных приложения.
+              Помогу сориентироваться в кредитном кабинете. Ответы основаны на демоданных
+              приложения.
             </p>
           </div>
           <span className="assistant-label">ЧАСТЫЕ ВОПРОСЫ</span>
@@ -70,17 +70,17 @@ export function Assistant({ close }: { close: () => void }) {
             <span>
               <Icon name="building" size={17} /> ВАША КОМПАНИЯ
             </span>
-            <strong>{company?.name || "Профиль не заполнен"}</strong>
+            <strong>{company?.name || 'Профиль не заполнен'}</strong>
             <small>
               {company
                 ? `Выручка ${rub(company.revenue)} в месяц`
-                : "Откройте профиль, чтобы заполнить данные"}
+                : 'Откройте профиль, чтобы заполнить данные'}
             </small>
           </div>
         </div>
         <div className="assistant-foot">
-          <Icon name="info" size={16} /> AI-модель не подключена. Основной
-          сценарий доступен полностью.
+          <Icon name="info" size={16} /> AI-модель не подключена. Основной сценарий доступен
+          полностью.
         </div>
       </aside>
     </>

@@ -1,19 +1,16 @@
-import { type Application } from "../mock-api";
-import { day, productById, rub } from "../lib/format";
-import { Icon, StatusPill } from "./ui";
+import { type Application } from '../mock-api';
+import { day, productById, rub } from '../lib/format';
+import { Icon, StatusPill } from './ui';
 
 function ApplicationRow({ application }: { application: Application }) {
   const product = productById(application.productId);
   return (
-    <a
-      className="application-row"
-      href={`#/application?id=${encodeURIComponent(application.id)}`}
-    >
+    <a className="application-row" href={`#/application?id=${encodeURIComponent(application.id)}`}>
       <div className="app-row-icon">
         <Icon name="file" size={22} />
       </div>
       <div className="app-row-main">
-        <strong>{product?.name || "Кредитное предложение"}</strong>
+        <strong>{product?.name || 'Кредитное предложение'}</strong>
         <small>
           № {application.id} · {day(application.createdAt)}
         </small>
@@ -29,11 +26,7 @@ function ApplicationRow({ application }: { application: Application }) {
     </a>
   );
 }
-export function ApplicationList({
-  applications,
-}: {
-  applications: Application[];
-}) {
+export function ApplicationList({ applications }: { applications: Application[] }) {
   return (
     <div className="application-list">
       {applications.map((application) => (

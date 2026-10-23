@@ -1,18 +1,18 @@
-import * as React from "react";
-import { createContext, useContext } from "react";
-import { getWorkspace, getApplication, type Need } from "../mock-api";
+import * as React from 'react';
+import { createContext, useContext } from 'react';
+import { getWorkspace, getApplication, type Need } from '../mock-api';
 
 export const defaultNeed: Need = {
-  purpose: "Закупка оборудования",
-  category: "development",
+  purpose: 'Закупка оборудования',
+  category: 'development',
   amount: 1200000,
   term: 24,
 };
 export const readRoute = () => {
-  const [path, query] = (location.hash.slice(1) || "/home").split("?");
+  const [path, query] = (location.hash.slice(1) || '/home').split('?');
   return {
-    page: path.replace(/^\//, "") || "home",
-    id: new URLSearchParams(query || "").get("id") || "",
+    page: path.replace(/^\//, '') || 'home',
+    id: new URLSearchParams(query || '').get('id') || '',
   };
 };
 
@@ -31,7 +31,7 @@ export interface AppContextValue {
 export const AppContext = createContext<AppContextValue | null>(null);
 export function useApp() {
   const value = useContext(AppContext);
-  if (!value) throw new Error("Нет контекста приложения");
+  if (!value) throw new Error('Нет контекста приложения');
   return value;
 }
 export function useWorkspace() {

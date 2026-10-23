@@ -1,7 +1,7 @@
-import { categoryNames } from "../mock-api";
-import { productById, rub } from "../lib/format";
-import { useApp, useApplication } from "../app/context";
-import { Button, Empty, Icon, Intro, PanelHeading } from "../components/ui";
+import { categoryNames } from '../mock-api';
+import { productById, rub } from '../lib/format';
+import { useApp, useApplication } from '../app/context';
+import { Button, Empty, Icon, Intro, PanelHeading } from '../components/ui';
 
 export function ResultPage() {
   const { go } = useApp();
@@ -19,7 +19,7 @@ export function ResultPage() {
           title="Решение ещё не готово"
           message="Отправьте заявку и дождитесь решения сотрудника банка."
           label="Открыть заявку"
-          onClick={() => go("application", application.id)}
+          onClick={() => go('application', application.id)}
         />
       </>
     );
@@ -33,26 +33,24 @@ export function ResultPage() {
       </div>
       <Intro
         tag={`РЕШЕНИЕ ПО ЗАЯВКЕ № ${application.id}`}
-        title={decision.approved ? "Хорошие новости!" : "Решение по заявке"}
+        title={decision.approved ? 'Хорошие новости!' : 'Решение по заявке'}
         subtitle={
           decision.approved
-            ? "Демонстрационная проверка завершена. Ознакомьтесь с условиями."
-            : "Демонстрационная проверка завершена. Посмотрите причины решения."
+            ? 'Демонстрационная проверка завершена. Ознакомьтесь с условиями.'
+            : 'Демонстрационная проверка завершена. Посмотрите причины решения.'
         }
       />
-      <div
-        className={`result-hero ${decision.approved ? "approved-hero" : "rejected-hero"}`}
-      >
+      <div className={`result-hero ${decision.approved ? 'approved-hero' : 'rejected-hero'}`}>
         <div className="result-symbol">
-          <Icon name={decision.approved ? "check" : "info"} size={30} />
+          <Icon name={decision.approved ? 'check' : 'info'} size={30} />
         </div>
         <div>
           <span>ДЕМОНСТРАЦИОННОЕ РЕШЕНИЕ</span>
-          <h2>{decision.approved ? "Заявка одобрена" : "В заявке отказано"}</h2>
+          <h2>{decision.approved ? 'Заявка одобрена' : 'В заявке отказано'}</h2>
           <p>
             {decision.approved
-              ? "Условия рассчитаны по синтетическому каталогу для хакатона."
-              : "Это результат локального симулятора. Можно изменить данные и создать новую заявку."}
+              ? 'Условия рассчитаны по синтетическому каталогу для хакатона.'
+              : 'Это результат локального симулятора. Можно изменить данные и создать новую заявку.'}
           </p>
         </div>
       </div>
@@ -80,7 +78,7 @@ export function ResultPage() {
             <PanelHeading
               icon="file"
               title="Параметры предложения"
-              subtitle={`${product?.name || ""} · ${product ? categoryNames[product.category] : ""}`}
+              subtitle={`${product?.name || ''} · ${product ? categoryNames[product.category] : ''}`}
             />
             <div className="detail-pair">
               <span>Назначение</span>
@@ -95,7 +93,7 @@ export function ResultPage() {
               <strong>{rub(decision.payment * application.need.term)}</strong>
             </div>
             <div className="panel-actions">
-              <Button onClick={() => go("contract", application.id)}>
+              <Button onClick={() => go('contract', application.id)}>
                 Перейти к договору <Icon name="arrow" size={17} />
               </Button>
             </div>
@@ -112,10 +110,10 @@ export function ResultPage() {
             ))}
           </ul>
           <p className="muted">
-            Причины основаны на синтетических данных этого демо. Повторный
-            подбор не гарантирует одобрения.
+            Причины основаны на синтетических данных этого демо. Повторный подбор не гарантирует
+            одобрения.
           </p>
-          <Button onClick={() => go("need")}>
+          <Button onClick={() => go('need')}>
             Подобрать другое предложение <Icon name="arrow" size={17} />
           </Button>
         </section>

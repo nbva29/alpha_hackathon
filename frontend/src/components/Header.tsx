@@ -1,15 +1,15 @@
-import * as React from "react";
-import { getAccount } from "../mock-api";
-import { initials } from "../lib/format";
-import { useApp } from "../app/context";
-import { Brand, Icon, type IconName } from "./ui";
-import { AssistantToggle } from "./Assistant";
+import * as React from 'react';
+import { getAccount } from '../mock-api';
+import { initials } from '../lib/format';
+import { useApp } from '../app/context';
+import { Brand, Icon, type IconName } from './ui';
+import { AssistantToggle } from './Assistant';
 
 const navItems: { page: string; label: string; icon: IconName }[] = [
-  { page: "home", label: "Главная", icon: "grid" },
-  { page: "company", label: "Моя компания", icon: "building" },
-  { page: "need", label: "Подобрать кредит", icon: "wallet" },
-  { page: "applications", label: "Мои заявки", icon: "file" },
+  { page: 'home', label: 'Главная', icon: 'grid' },
+  { page: 'company', label: 'Моя компания', icon: 'building' },
+  { page: 'need', label: 'Подобрать кредит', icon: 'wallet' },
+  { page: 'applications', label: 'Мои заявки', icon: 'file' },
 ];
 export function Header({
   children,
@@ -20,10 +20,10 @@ export function Header({
 }) {
   const { userId, route } = useApp();
   const account = getAccount(userId);
-  const current = ["application", "result", "contract"].includes(route.page)
-    ? "applications"
-    : route.page === "catalog"
-      ? "need"
+  const current = ['application', 'result', 'contract'].includes(route.page)
+    ? 'applications'
+    : route.page === 'catalog'
+      ? 'need'
       : route.page;
   return (
     <div className="app-shell">
@@ -37,7 +37,7 @@ export function Header({
             <a
               key={item.page}
               href={`#/${item.page}`}
-              className={`nav-link ${current === item.page ? "active" : ""}`}
+              className={`nav-link ${current === item.page ? 'active' : ''}`}
             >
               <Icon name={item.icon} />
               <span>{item.label}</span>
@@ -60,12 +60,7 @@ export function Header({
               <strong>{account.name}</strong>
               <small>Предприниматель</small>
             </span>
-            <button
-              className="icon-button"
-              type="button"
-              onClick={onLogout}
-              aria-label="Выйти"
-            >
+            <button className="icon-button" type="button" onClick={onLogout} aria-label="Выйти">
               <Icon name="exit" size={18} />
             </button>
           </div>

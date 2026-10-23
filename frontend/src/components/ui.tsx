@@ -1,20 +1,20 @@
-import * as React from "react";
-import { statusNames, type Status } from "../mock-api";
-import gridIcon from "../assets/icons/grid.svg";
-import buildingIcon from "../assets/icons/building.svg";
-import walletIcon from "../assets/icons/wallet.svg";
-import fileIcon from "../assets/icons/file.svg";
-import arrowIcon from "../assets/icons/arrow.svg";
-import backIcon from "../assets/icons/back.svg";
-import checkIcon from "../assets/icons/check.svg";
-import sparkIcon from "../assets/icons/spark.svg";
-import clockIcon from "../assets/icons/clock.svg";
-import shieldIcon from "../assets/icons/shield.svg";
-import closeIcon from "../assets/icons/close.svg";
-import uploadIcon from "../assets/icons/upload.svg";
-import chevronIcon from "../assets/icons/chevron.svg";
-import exitIcon from "../assets/icons/exit.svg";
-import infoIcon from "../assets/icons/info.svg";
+import * as React from 'react';
+import { statusNames, type Status } from '../mock-api';
+import gridIcon from '../assets/icons/grid.svg';
+import buildingIcon from '../assets/icons/building.svg';
+import walletIcon from '../assets/icons/wallet.svg';
+import fileIcon from '../assets/icons/file.svg';
+import arrowIcon from '../assets/icons/arrow.svg';
+import backIcon from '../assets/icons/back.svg';
+import checkIcon from '../assets/icons/check.svg';
+import sparkIcon from '../assets/icons/spark.svg';
+import clockIcon from '../assets/icons/clock.svg';
+import shieldIcon from '../assets/icons/shield.svg';
+import closeIcon from '../assets/icons/close.svg';
+import uploadIcon from '../assets/icons/upload.svg';
+import chevronIcon from '../assets/icons/chevron.svg';
+import exitIcon from '../assets/icons/exit.svg';
+import infoIcon from '../assets/icons/info.svg';
 
 const icons = {
   grid: gridIcon,
@@ -39,7 +39,12 @@ export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
   return (
     <span
       className="icon-image"
-      style={{ width: size, height: size, maskImage: `url("${src}")`, WebkitMaskImage: `url("${src}")` }}
+      style={{
+        width: size,
+        height: size,
+        maskImage: `url("${src}")`,
+        WebkitMaskImage: `url("${src}")`,
+      }}
       aria-hidden="true"
     >
       <img src={src} width={size} height={size} alt="" />
@@ -58,19 +63,19 @@ export function Brand() {
 }
 export function Button({
   children,
-  variant = "primary",
+  variant = 'primary',
   wide = false,
   small = false,
-  className = "",
+  className = '',
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "outline" | "white";
+  variant?: 'primary' | 'outline' | 'white';
   wide?: boolean;
   small?: boolean;
 }) {
   return (
     <button
-      className={`button button-${variant}${wide ? " button-wide" : ""}${small ? " button-sm" : ""} ${className}`}
+      className={`button button-${variant}${wide ? ' button-wide' : ''}${small ? ' button-sm' : ''} ${className}`}
       {...props}
     >
       {children}
@@ -81,7 +86,7 @@ export function Field({
   label,
   name,
   value,
-  type = "text",
+  type = 'text',
   ...props
 }: {
   label: string;
@@ -96,7 +101,7 @@ export function Field({
         key={`${name}-${value}`}
         name={name}
         type={type}
-        defaultValue={value ?? ""}
+        defaultValue={value ?? ''}
         {...props}
       />
     </label>

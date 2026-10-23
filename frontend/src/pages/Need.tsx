@@ -1,16 +1,9 @@
-import * as React from "react";
-import { categoryNames, ageMonths, type Category } from "../mock-api";
-import { rub } from "../lib/format";
-import { useApp, useWorkspace, values } from "../app/context";
-import {
-  Button,
-  Field,
-  Icon,
-  Intro,
-  PanelHeading,
-  SelectField,
-} from "../components/ui";
-import { Wizard } from "../components/Wizard";
+import * as React from 'react';
+import { categoryNames, ageMonths, type Category } from '../mock-api';
+import { rub } from '../lib/format';
+import { useApp, useWorkspace, values } from '../app/context';
+import { Button, Field, Icon, Intro, PanelHeading, SelectField } from '../components/ui';
+import { Wizard } from '../components/Wizard';
 
 export function NeedPage() {
   const { need, setNeed, go } = useApp();
@@ -24,7 +17,7 @@ export function NeedPage() {
       amount: Number(data.amount),
       term: Number(data.term),
     });
-    go("catalog");
+    go('catalog');
   };
   return (
     <>
@@ -69,9 +62,10 @@ export function NeedPage() {
                 name="term"
                 label="Срок, месяцев"
                 value={need.term}
-                options={["3", "6", "12", "18", "24", "36", "48", "60"].map(
-                  (value) => [value, `${value} мес.`],
-                )}
+                options={['3', '6', '12', '18', '24', '36', '48', '60'].map((value) => [
+                  value,
+                  `${value} мес.`,
+                ])}
               />
             </div>
             <Button type="submit" wide>
@@ -85,26 +79,22 @@ export function NeedPage() {
               <Icon name="spark" size={24} />
             </span>
             <h3>Подбор без ожидания</h3>
-            <p>
-              Оценим сумму, срок и параметры компании. Всё работает локально и
-              без AI.
-            </p>
+            <p>Оценим сумму, срок и параметры компании. Всё работает локально и без AI.</p>
           </div>
           <div className="mini-company">
             <div>
               <span className="mini-company-icon">
                 <Icon name="building" />
               </span>
-              <strong>{company?.name || "Профиль не заполнен"}</strong>
+              <strong>{company?.name || 'Профиль не заполнен'}</strong>
             </div>
             <p>
               {company
                 ? `Срок работы: ${Math.floor(ageMonths(company.registeredAt) / 12)} г. ${ageMonths(company.registeredAt) % 12} мес. · Выручка ${rub(company.revenue)} / мес.`
-                : "Для оформления заявки потребуется заполнить сведения о компании."}
+                : 'Для оформления заявки потребуется заполнить сведения о компании.'}
             </p>
             <a href="#/company">
-              {company ? "Изменить сведения" : "Заполнить профиль"}{" "}
-              <Icon name="arrow" size={15} />
+              {company ? 'Изменить сведения' : 'Заполнить профиль'} <Icon name="arrow" size={15} />
             </a>
           </div>
         </aside>

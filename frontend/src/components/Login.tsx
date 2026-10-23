@@ -1,13 +1,9 @@
-import { accounts } from "../mock-api";
-import { initials } from "../lib/format";
-import { values } from "../app/context";
-import { Brand, Eyebrow, Field, Button, Icon } from "./ui";
+import { accounts } from '../mock-api';
+import { initials } from '../lib/format';
+import { values } from '../app/context';
+import { Brand, Eyebrow, Field, Button, Icon } from './ui';
 
-export function Login({
-  onLogin,
-}: {
-  onLogin: (email: string, password: string) => void;
-}) {
+export function Login({ onLogin }: { onLogin: (email: string, password: string) => void }) {
   return (
     <div className="login-shell">
       <div className="login-art">
@@ -30,9 +26,7 @@ export function Login({
           </h1>
           <p>Один кабинет для выбора кредита, заявки и понятного решения.</p>
         </div>
-        <div className="login-art-foot">
-          Альфа-Хак 2026 · Демонстрационный прототип
-        </div>
+        <div className="login-art-foot">Альфа-Хак 2026 · Демонстрационный прототип</div>
       </div>
       <div className="login-panel">
         <div className="login-card">
@@ -79,20 +73,23 @@ export function Login({
                 className="demo-account"
                 onClick={() => onLogin(account.email, account.password)}
               >
-                <span className={`demo-avatar ${index ? "avatar-blue" : ""}`}>
+                <span className={`demo-avatar ${index ? 'avatar-blue' : ''}`}>
                   {initials(account.name)}
                 </span>
                 <span>
                   <strong>{account.name}</strong>
-                  <small>{account.role === "employee" ? "Сотрудник банка" : "Предприниматель"} · {account.email} · demo123</small>
+                  <small>
+                    {account.role === 'employee' ? 'Сотрудник банка' : 'Предприниматель'} ·{' '}
+                    {account.email} · demo123
+                  </small>
                 </span>
                 <Icon name="arrow" size={16} />
               </button>
             ))}
           </div>
           <p className="login-disclaimer">
-            <Icon name="info" size={16} /> Это прототип хакатона. Реальные
-            банковские операции не выполняются.
+            <Icon name="info" size={16} /> Это прототип хакатона. Реальные банковские операции не
+            выполняются.
           </p>
         </div>
       </div>

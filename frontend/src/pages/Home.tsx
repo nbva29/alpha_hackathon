@@ -1,20 +1,18 @@
-import { getAccount } from "../mock-api";
-import { day } from "../lib/format";
-import { useApp, useWorkspace } from "../app/context";
-import { Button, Empty, Icon, Intro, type IconName } from "../components/ui";
-import { ApplicationList } from "../components/ApplicationList";
+import { getAccount } from '../mock-api';
+import { day } from '../lib/format';
+import { useApp, useWorkspace } from '../app/context';
+import { Button, Empty, Icon, Intro, type IconName } from '../components/ui';
+import { ApplicationList } from '../components/ApplicationList';
 
 export function Home() {
   const { userId, go } = useApp();
   const { company, applications } = useWorkspace();
-  const firstName = getAccount(userId).name.split(" ")[0];
+  const firstName = getAccount(userId).name.split(' ')[0];
   const active = applications.filter(
-    (item) => !["DISBURSED_DEMO", "REJECTED"].includes(item.status),
+    (item) => !['DISBURSED_DEMO', 'REJECTED'].includes(item.status),
   );
   const approved = applications.filter((item) =>
-    ["APPROVED", "OFFER_ACCEPTED", "SIGNED_DEMO", "DISBURSED_DEMO"].includes(
-      item.status,
-    ),
+    ['APPROVED', 'OFFER_ACCEPTED', 'SIGNED_DEMO', 'DISBURSED_DEMO'].includes(item.status),
   );
   return (
     <>
@@ -36,11 +34,8 @@ export function Home() {
             <br />
             Мы помогаем.
           </h2>
-          <p>
-            Расскажите о цели — подберём подходящее предложение и проведём по
-            каждому шагу.
-          </p>
-          <Button variant="white" onClick={() => go("need")}>
+          <p>Расскажите о цели — подберём подходящее предложение и проведём по каждому шагу.</p>
+          <Button variant="white" onClick={() => go('need')}>
             Подобрать финансирование <Icon name="arrow" size={19} />
           </Button>
         </div>
@@ -50,34 +45,16 @@ export function Home() {
           <div className="hero-disc disc-three" />
           <div className="hero-card">
             <span>АЛЬФА · ХАК</span>
-            <b>{company?.name || "Ваш бизнес"}</b>
+            <b>{company?.name || 'Ваш бизнес'}</b>
             <small>Демо-кредитный кабинет</small>
           </div>
         </div>
       </section>
       <div className="stat-grid">
         {[
-          [
-            "file",
-            "Всего заявок",
-            applications.length,
-            "в вашем кабинете",
-            "red",
-          ],
-          [
-            "clock",
-            "В работе",
-            active.length,
-            "ожидают ваших действий",
-            "amber",
-          ],
-          [
-            "check",
-            "Одобрено",
-            approved.length,
-            "демонстрационных решений",
-            "green",
-          ],
+          ['file', 'Всего заявок', applications.length, 'в вашем кабинете', 'red'],
+          ['clock', 'В работе', active.length, 'ожидают ваших действий', 'amber'],
+          ['check', 'Одобрено', approved.length, 'демонстрационных решений', 'green'],
         ].map(([symbol, label, count, sub, color]) => (
           <div className="stat-card" key={label}>
             <div className={`stat-icon ${color}`}>
@@ -107,7 +84,7 @@ export function Home() {
           title="Пока нет заявок"
           message="Начните с подбора предложения для вашего бизнеса."
           label="Подобрать кредит"
-          onClick={() => go("need")}
+          onClick={() => go('need')}
         />
       )}
       <div className="home-bottom">
@@ -116,13 +93,11 @@ export function Home() {
             <Icon name="building" size={22} />
           </div>
           <div>
-            <h3>
-              {company ? "Профиль компании заполнен" : "Расскажите о компании"}
-            </h3>
+            <h3>{company ? 'Профиль компании заполнен' : 'Расскажите о компании'}</h3>
             <p>
               {company
                 ? `${company.name} · ИНН ${company.inn}`
-                : "Сохраните данные один раз, чтобы быстрее создавать заявки."}
+                : 'Сохраните данные один раз, чтобы быстрее создавать заявки.'}
             </p>
           </div>
           <a href="#/company">

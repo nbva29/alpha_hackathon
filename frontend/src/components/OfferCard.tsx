@@ -4,33 +4,25 @@ import {
   categoryNames,
   type Product,
   type Company,
-} from "../mock-api";
-import { rub } from "../lib/format";
-import { useApp } from "../app/context";
-import { Button, Icon } from "./ui";
+} from '../mock-api';
+import { rub } from '../lib/format';
+import { useApp } from '../app/context';
+import { Button, Icon } from './ui';
 
-export function OfferCard({
-  product,
-  company,
-}: {
-  product: Product;
-  company: Company | null;
-}) {
+export function OfferCard({ product, company }: { product: Product; company: Company | null }) {
   const { userId, need, selected, setSelected, go, run, notice } = useApp();
   const result = evaluateProduct(product, need, company);
   const compared = selected.includes(product.id);
   const choose = () =>
     run(() => {
       const application = createApplication(userId, need, product.id);
-      go("application", application.id);
-      notice("Черновик заявки создан.");
+      go('application', application.id);
+      notice('Черновик заявки создан.');
     });
   return (
-    <article className={`offer-card ${result.fits ? "" : "offer-muted"}`}>
+    <article className={`offer-card ${result.fits ? '' : 'offer-muted'}`}>
       <div className="offer-head">
-        <span className="offer-category">
-          {categoryNames[product.category]}
-        </span>
+        <span className="offer-category">{categoryNames[product.category]}</span>
         <span className="offer-id">{product.version}</span>
       </div>
       <div className="offer-title-row">
@@ -39,16 +31,13 @@ export function OfferCard({
           <p>{product.purpose}</p>
         </div>
         <div className="offer-glyph">
-          <Icon
-            name={product.category === "overdraft" ? "wallet" : "arrow"}
-            size={21}
-          />
+          <Icon name={product.category === 'overdraft' ? 'wallet' : 'arrow'} size={21} />
         </div>
       </div>
       <div className="offer-metrics">
         <div>
           <span>Ставка от</span>
-          <strong>{product.rate.toLocaleString("ru-RU")}%</strong>
+          <strong>{product.rate.toLocaleString('ru-RU')}%</strong>
         </div>
         <div>
           <span>Сумма</span>
@@ -78,7 +67,7 @@ export function OfferCard({
           </span>
         ) : (
           <span className="unfit-label">
-            <Icon name="info" size={16} /> {result.reasons.join(", ")}
+            <Icon name="info" size={16} /> {result.reasons.join(', ')}
           </span>
         )}
         <div>
@@ -93,7 +82,7 @@ export function OfferCard({
               )
             }
           >
-            {compared ? "Убрать из сравнения" : "Сравнить"}
+            {compared ? 'Убрать из сравнения' : 'Сравнить'}
           </Button>
           <Button small onClick={choose}>
             Выбрать <Icon name="arrow" size={16} />

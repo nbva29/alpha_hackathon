@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { acceptOffer, signDemo } from "../mock-api";
-import { productById, rub } from "../lib/format";
-import { useApp, useApplication } from "../app/context";
-import { Button, Empty, Icon, Intro } from "../components/ui";
+import { useState } from 'react';
+import { acceptOffer, signDemo } from '../mock-api';
+import { productById, rub } from '../lib/format';
+import { useApp, useApplication } from '../app/context';
+import { Button, Empty, Icon, Intro } from '../components/ui';
 
 export function ContractPage() {
   const { userId, go, run, refresh, notice } = useApp();
@@ -15,25 +15,23 @@ export function ContractPage() {
         title="Договор недоступен"
         message="Договор доступен только по одобренной заявке."
         label="К заявке"
-        onClick={() => go("application", application.id)}
+        onClick={() => go('application', application.id)}
       />
     );
-  const accepted = ["OFFER_ACCEPTED", "SIGNED_DEMO", "DISBURSED_DEMO"].includes(
-    application.status,
-  );
-  const signed = ["SIGNED_DEMO", "DISBURSED_DEMO"].includes(application.status);
+  const accepted = ['OFFER_ACCEPTED', 'SIGNED_DEMO', 'DISBURSED_DEMO'].includes(application.status);
+  const signed = ['SIGNED_DEMO', 'DISBURSED_DEMO'].includes(application.status);
   const accept = () =>
     run(() => {
-      if (!checked) throw new Error("Подтвердите ознакомление с условиями.");
+      if (!checked) throw new Error('Подтвердите ознакомление с условиями.');
       acceptOffer(userId, application.id);
       refresh();
-      notice("Демонстрационные условия приняты.");
+      notice('Демонстрационные условия приняты.');
     });
   const sign = () =>
     run(() => {
       signDemo(userId, application.id);
       refresh();
-      notice("Демо-договор подписан, демонстрационная выдача выполнена.");
+      notice('Демо-договор подписан, демонстрационная выдача выполнена.');
     });
   return (
     <>
@@ -44,7 +42,7 @@ export function ContractPage() {
       </div>
       <Intro
         tag="ШАГ 03 / 03 · ОФОРМЛЕНИЕ"
-        title={signed ? "Демо-кредит оформлен" : "Демонстрационный договор"}
+        title={signed ? 'Демо-кредит оформлен' : 'Демонстрационный договор'}
         subtitle="Ознакомьтесь с условиями перед подтверждением."
       />
       {signed && (
@@ -69,8 +67,8 @@ export function ContractPage() {
           <span className="section-label">ПРЕДЛОЖЕНИЕ № {application.id}</span>
           <h2>Условия кредитования</h2>
           <p className="muted">
-            Этот документ создан для демонстрации интерфейса и не является
-            кредитным договором или офертой.
+            Этот документ создан для демонстрации интерфейса и не является кредитным договором или
+            офертой.
           </p>
           <div className="contract-data">
             <div>
@@ -107,23 +105,16 @@ export function ContractPage() {
             </div>
           </div>
           <div className="contract-foot">
-            <Icon name="shield" size={18} /> Прототип Альфа-Хак 2026 · Без
-            юридической силы
+            <Icon name="shield" size={18} /> Прототип Альфа-Хак 2026 · Без юридической силы
           </div>
         </section>
         <aside className="panel contract-side">
           <span className="section-label">СЛЕДУЮЩИЙ ШАГ</span>
-          <h3>
-            {signed
-              ? "Готово!"
-              : accepted
-                ? "Подпишите договор"
-                : "Подтвердите условия"}
-          </h3>
+          <h3>{signed ? 'Готово!' : accepted ? 'Подпишите договор' : 'Подтвердите условия'}</h3>
           <p>
             {signed
-              ? "Вернитесь к заявке, чтобы посмотреть полную историю."
-              : "Все действия на этой странице демонстрационные. Подтверждение не создаёт финансовых обязательств."}
+              ? 'Вернитесь к заявке, чтобы посмотреть полную историю.'
+              : 'Все действия на этой странице демонстрационные. Подтверждение не создаёт финансовых обязательств.'}
           </p>
           {!accepted ? (
             <>
@@ -144,11 +135,7 @@ export function ContractPage() {
               Подписать демо-договор <Icon name="arrow" size={17} />
             </Button>
           ) : (
-            <Button
-              variant="outline"
-              wide
-              onClick={() => go("application", application.id)}
-            >
+            <Button variant="outline" wide onClick={() => go('application', application.id)}>
               История заявки <Icon name="arrow" size={17} />
             </Button>
           )}

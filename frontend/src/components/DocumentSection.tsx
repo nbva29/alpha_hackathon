@@ -1,13 +1,8 @@
-import * as React from "react";
-import {
-  addDocument,
-  removeDocument,
-  type Application,
-  type Product,
-} from "../mock-api";
-import { day } from "../lib/format";
-import { useApp } from "../app/context";
-import { Icon, PanelHeading } from "./ui";
+import * as React from 'react';
+import { addDocument, removeDocument, type Application, type Product } from '../mock-api';
+import { day } from '../lib/format';
+import { useApp } from '../app/context';
+import { Icon, PanelHeading } from './ui';
 
 export function DocumentSection({
   application,
@@ -19,19 +14,16 @@ export function DocumentSection({
   editable: boolean;
 }) {
   const { userId, run, refresh, notice } = useApp();
-  const label =
-    product.document === "statement"
-      ? "Выписка по счёту"
-      : "Финансовая отчётность";
+  const label = product.document === 'statement' ? 'Выписка по счёту' : 'Финансовая отчётность';
   const upload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     try {
       if (
-        !["application/pdf", "image/png", "image/jpeg"].includes(file.type) ||
+        !['application/pdf', 'image/png', 'image/jpeg'].includes(file.type) ||
         file.size > 1024 * 1024
       )
-        throw new Error("Загрузите PDF, PNG или JPG размером до 1 МБ.");
+        throw new Error('Загрузите PDF, PNG или JPG размером до 1 МБ.');
       const data = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(String(reader.result));
@@ -46,25 +38,21 @@ export function DocumentSection({
         data,
       });
       refresh();
-      notice("Документ добавлен к заявке.");
+      notice('Документ добавлен к заявке.');
     } catch (error) {
       notice(
-        error instanceof DOMException && error.name === "QuotaExceededError"
-          ? "В браузере закончилось место для демодокументов."
+        error instanceof DOMException && error.name === 'QuotaExceededError'
+          ? 'В браузере закончилось место для демодокументов.'
           : error instanceof Error
             ? error.message
-            : "Не удалось загрузить документ.",
+            : 'Не удалось загрузить документ.',
         true,
       );
     }
   };
   return (
     <section className="panel documents-panel">
-      <PanelHeading
-        icon="file"
-        title="Документы"
-        subtitle={`Обязательный документ: ${label}`}
-      />
+      <PanelHeading icon="file" title="Документы" subtitle={`Обязательный документ: ${label}`} />
       {editable && (
         <label className="upload-zone">
           <Icon name="upload" size={24} />
@@ -86,8 +74,7 @@ export function DocumentSection({
               <span className="document-info">
                 <strong>{document.name}</strong>
                 <small>
-                  {Math.round(document.size / 1024)} КБ ·{" "}
-                  {day(document.addedAt)}
+                  {Math.round(document.size / 1024)} КБ · {day(document.addedAt)}
                 </small>
               </span>
               {editable && (
@@ -99,7 +86,7 @@ export function DocumentSection({
                     run(() => {
                       removeDocument(userId, application.id, document.id);
                       refresh();
-                      notice("Документ удалён.");
+                      notice('Документ удалён.');
                     })
                   }
                 >
@@ -116,17 +103,15 @@ export function DocumentSection({
         <p className="document-note">
           <Icon
             name={
-              application.documents.some(
-                (item) => item.kind === product.document,
-              )
-                ? "check"
-                : "info"
+              application.documents.some((item) => item.kind === product.document)
+                ? 'check'
+                : 'info'
             }
             size={16}
-          />{" "}
+          />{' '}
           {application.documents.some((item) => item.kind === product.document)
-            ? "Обязательный документ загружен"
-            : "При отправке без документа симулятор запросит его дополнительно"}
+            ? 'Обязательный документ загружен'
+            : 'При отправке без документа симулятор запросит его дополнительно'}
         </p>
       )}
     </section>
