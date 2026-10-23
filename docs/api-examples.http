@@ -1,0 +1,43 @@
+@base = http://localhost:8000
+@csrf = replace-after-login
+
+### Login (save alfa_session cookie from response)
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "anna@demo.local",
+  "password": "demo123"
+}
+
+### Current session / obtain current CSRF token
+GET {{base}}/api/auth/me
+
+### Products (requires cookie)
+GET {{base}}/api/credit-products
+
+### Company profile
+GET {{base}}/api/companies/me
+
+### Create a draft
+POST {{base}}/api/applications
+Content-Type: application/json
+X-CSRF-Token: {{csrf}}
+
+{
+  "product_id": "growth-start",
+  "need": {
+    "purpose": "Закупка оборудования",
+    "category": "development",
+    "amount": 1200000,
+    "term": 24
+  }
+}
+
+### Submit draft (replace application id)
+POST {{base}}/api/applications/AH-REPLACE/submit
+X-CSRF-Token: {{csrf}}
+
+### Logout
+POST {{base}}/api/auth/logout
+X-CSRF-Token: {{csrf}}

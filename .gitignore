@@ -1,6 +1,29 @@
-# Local Alfa-Bank design system reference and packages
-/.local/alfa-styles/
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+backend/venv/
+
+# Local environment and generated data
+.env
+!.env.example
+*.db
+*.sqlite
+*.sqlite3
+backend/uploads/
+backend/test_uploads/
 
 # Frontend install and build outputs
 /frontend/node_modules/
 /frontend/dist/
+
+# Local Alfa-Bank design system reference and packages
+/.local/alfa-styles/
+
+# Editor and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
