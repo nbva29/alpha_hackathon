@@ -1,18 +1,18 @@
 import * as React from 'react';
-import { saveCompany } from '../mock-api';
+import { api } from '../api';
 import { rub } from '../lib/format';
 import { useApp, useWorkspace, values } from '../app/context';
 import { Button, Field, Icon, Intro, PanelHeading, SelectField } from '../components/ui';
 
 export function CompanyPage() {
-  const { userId, run, refresh, notice } = useApp();
+  const { run, refresh, notice } = useApp();
   const company = useWorkspace().company;
   const save = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = event.currentTarget;
-    run(() => {
+    run(async () => {
       const data = values(form);
-      saveCompany(userId, {
+      await api.saveCompany({
         name: String(data.name),
         inn: String(data.inn),
         legalForm: String(data.legalForm),
@@ -25,7 +25,7 @@ export function CompanyPage() {
           form.elements.namedItem('overdue') instanceof HTMLInputElement &&
           (form.elements.namedItem('overdue') as HTMLInputElement).checked,
       });
-      refresh();
+      await refresh();
       notice('Данные компании сохранены.');
     });
   };

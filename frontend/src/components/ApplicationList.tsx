@@ -1,9 +1,10 @@
 import { type Application } from '../mock-api';
-import { day, productById, rub } from '../lib/format';
+import { day, rub } from '../lib/format';
+import { useApp } from '../app/context';
 import { Icon, StatusPill } from './ui';
 
 function ApplicationRow({ application }: { application: Application }) {
-  const product = productById(application.productId);
+  const product = useApp().products.find((item) => item.id === application.productId);
   return (
     <a className="application-row" href={`#/application?id=${encodeURIComponent(application.id)}`}>
       <div className="app-row-icon">

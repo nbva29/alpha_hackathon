@@ -63,6 +63,16 @@ def seed_demo_data() -> None:
                 db.flush()
             if not db.query(Company).filter_by(owner_id=user.id).first():
                 db.add(Company(owner_id=user.id, **company))
+        if not db.query(User).filter_by(email="bank@demo.local").first():
+            db.add(
+                User(
+                    name="Мария Орлова",
+                    email="bank@demo.local",
+                    password_hash=hash_password(settings.demo_seed_password),
+                    role="employee",
+                    is_active=True,
+                )
+            )
         db.commit()
     finally:
         db.close()

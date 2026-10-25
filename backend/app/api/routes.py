@@ -13,17 +13,20 @@ from fastapi import (
     Response,
     UploadFile,
 )
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.security import (
     current_session,
+    employee,
     entrepreneur,
     new_session,
     verify_password,
 )
 from app.db.session import get_db
 from app.integrations.bank_client import review
+from app.integrations.llm_client import complete
 from app.models.entities import (
     ApplicationDocument,
     BankCheckResult,
@@ -38,11 +41,19 @@ from app.schemas.api import (
     ApplicationCreate,
     ApplicationPatch,
     AssistantIn,
+    BankDecisionIn,
     CompanyIn,
     LoginIn,
 )
 from app.services.catalog import product_dict
-from app.services.credit_flow import age_months, application_dict, audit, transition
+from app.services.credit_flow import (
+    age_months,
+    application_dict,
+    audit,
+    monthly_payment,
+    transition,
+)
+from app.services.assistant import advisor_answer_is_grounded, advisor_context, advisor_fallback, comparison_answer_is_grounded, humanize_status_codes, product_alternatives, product_fit_reasons, retrieve_products, requested_amount_and_term, verified_comparison
 
 router = APIRouter(prefix="/api")
 
@@ -581,29 +592,10 @@ def submit(
             db,
             application,
             "DECISION_PENDING",
-            "Правила решения применены локальным Rule Engine",
+            "Скоринг завершён; ожидается решение сотрудника банка",
         )
 
-        outcome = result["outcome"]
-        approved = outcome == "APPROVED"
-        db.add(
-            CreditDecision(
-                application_id=application.id,
-                outcome=outcome,
-                approved=approved,
-                reasons=result.get("reasons", []),
-                rate=result["rate"],
-                monthly_payment=result["payment"],
-                note=result.get("note", "Решение сформировано демо-правилами"),
-                rule_version=result.get("rule_version", "rules-1.0"),
-            )
-        )
-        transition(
-            db,
-            application,
-            outcome,
-            "Демо-решение: " + ("предварительно одобрено" if approved else "отказ"),
-        )
+        # Сотрудник видит рекомендацию симулятора и принимает демо-решение отдельно.
 
     audit(
         db,
@@ -611,6 +603,106 @@ def submit(
         "application.reviewed",
         application.id,
         {"outcome": result["outcome"], "attempt": attempt},
+    )
+    db.commit()
+    db.refresh(application)
+    return application_dict(db, application)
+
+
+@router.get("/bank/applications")
+def bank_applications(user: User = Depends(employee), db: Session = Depends(get_db)):
+    applications = (
+        db.query(LoanApplication)
+        .filter(LoanApplication.status != "DRAFT")
+        .order_by(LoanApplication.updated_at.desc())
+        .all()
+    )
+    owners = {owner.id: owner for owner in db.query(User).all()}
+    return [
+        {
+            "ownerId": application.owner_id,
+            "borrowerName": owners[application.owner_id].name,
+            "application": application_dict(db, application),
+        }
+        for application in applications
+    ]
+
+
+@router.get("/bank/applications/{application_id}/documents/{document_id}")
+def bank_document(
+    application_id: str,
+    document_id: str,
+    user: User = Depends(employee),
+    db: Session = Depends(get_db),
+):
+    document = (
+        db.query(ApplicationDocument)
+        .filter_by(id=document_id, application_id=application_id)
+        .first()
+    )
+    if not document or not Path(document.storage_path).is_file():
+        raise HTTPException(404, "Документ не найден")
+    return FileResponse(
+        document.storage_path,
+        media_type=document.mime,
+        filename=document.name,
+        content_disposition_type="attachment",
+    )
+
+
+@router.post("/bank/applications/{application_id}/decision")
+def bank_decision(
+    application_id: str,
+    body: BankDecisionIn,
+    user: User = Depends(employee),
+    db: Session = Depends(get_db),
+):
+    application = db.get(LoanApplication, application_id)
+    if not application:
+        raise HTTPException(404, "Заявка не найдена")
+    if application.status != "DECISION_PENDING":
+        raise HTTPException(409, "Заявка пока не ожидает решения")
+    comment = body.comment.strip()
+    if body.action in ("reject", "request_info") and not comment:
+        raise HTTPException(422, "Укажите причину для клиента")
+
+    check = max(application.checks, key=lambda item: item.attempt, default=None)
+    if body.action == "approve" and (not check or (check.score or 0) < 50):
+        raise HTTPException(409, "Одобрение не соответствует результату демопроверки")
+
+    if body.action == "request_info":
+        transition(db, application, "NEEDS_INFO", comment)
+    else:
+        approved = body.action == "approve"
+        product = db.get(CreditProduct, application.product_id)
+        reasons = [] if approved else [comment]
+        db.add(
+            CreditDecision(
+                application_id=application.id,
+                outcome="APPROVED" if approved else "REJECTED",
+                approved=approved,
+                reasons=reasons,
+                rate=product.rate,
+                monthly_payment=round(
+                    monthly_payment(application.amount, product.rate, application.term),
+                    2,
+                ),
+                note=comment or "Одобрено сотрудником банка в демонстрационном режиме",
+                rule_version="employee-demo-1.0",
+            )
+        )
+        transition(
+            db,
+            application,
+            "APPROVED" if approved else "REJECTED",
+            "Демо-решение сотрудника: " + ("одобрено" if approved else comment),
+        )
+    audit(
+        db,
+        user.id,
+        "bank.decision",
+        application.id,
+        {"action": body.action, "comment": comment},
     )
     db.commit()
     db.refresh(application)
@@ -681,55 +773,109 @@ def assistant(
     user: User = Depends(entrepreneur),
     db: Session = Depends(get_db),
 ):
-    message = body.message.lower()
-    text = (
-        "Я помогу разобраться с кредитным предложением. Уточните сумму, срок и цель "
-        "финансирования — я сопоставлю их с условиями продуктов."
-    )
-
-    if any(token in message for token in ("ставк", "процент", "платеж", "платёж")):
-        text = (
-            "Ставка и ориентировочный платёж рассчитываются по выбранному продукту "
-            "и сроку. Итоговое решение принимает только детерминированный демо "
-            "Rule Engine; я не назначаю ставку и не одобряю кредит."
-        )
-    elif any(
-        token in message for token in ("документ", "справк", "выписк", "отчет", "отчёт")
-    ):
-        text = (
-            "Для продуктов «Бизнес-рост» и «Оборотный» приложите финансовую "
-            "отчётность (PDF, PNG или JPG до 1 МБ). Для овердрафта нужна выписка "
-            "по счёту."
-        )
-    elif any(token in message for token in ("отказ", "решен", "одобрен")):
-        text = (
-            "Статус и причины решения доступны в карточке заявки. Проверки и "
-            "скоринг демонстрационные и не обращаются к реальным ФНС или бюро "
-            "кредитных историй."
-        )
-    elif any(token in message for token in ("продукт", "предложен", "каталог")):
-        text = (
-            "В каталоге есть три категории: развитие бизнеса, оборотные средства "
-            "и овердрафт. Сравните допустимую сумму, срок, минимальную выручку и "
-            "необходимый документ."
-        )
-
     application_data = None
     if body.application_id:
         application = owned_app(db, user.id, body.application_id)
-        application_data = {
-            "id": application.id,
-            "status": application.status,
-            "need": {
-                "purpose": application.purpose,
-                "amount": application.amount,
-                "term": application.term,
-            },
-            "decision": application_dict(db, application)["decision"],
-        }
+        application_data = application_dict(db, application)
 
+    products = retrieve_products(db, body.message)
+    page = body.page_context
+    selected_products = []
+    if page:
+        for product_id in page.selected_product_ids:
+            product = db.get(CreditProduct, product_id)
+            if product and product.active:
+                selected_products.append(product_dict(product))
+    requested_amount, requested_term = requested_amount_and_term(body.message)
+    need = application_data["need"] if application_data else page.need.model_dump() if page and page.need else None
+    if requested_amount or requested_term:
+        need = {**(need or {}), **({"amount": requested_amount} if requested_amount else {}),
+                **({"term": requested_term} if requested_term else {})}
+    product_question = any(term in body.message.casefold() for term in
+                           ("кредит", "продукт", "вариант", "аналог", "сравн", "подход", "документ", "ставк", "услови"))
+    recommendation_question = any(term in body.message.casefold() for term in
+                                  ("подход", "рекоменду", "выбрать", "подобра"))
+    if need and recommendation_question and not requested_amount and not requested_term and page and page.page in {"need", "catalog"}:
+        products = [item for item in products if item["min"] <= need["amount"] <= item["max"]
+                    and item["minTerm"] <= need["term"] <= item["maxTerm"]]
+    comparison_context = bool(page and page.page == "catalog" and len(selected_products) >= 2)
+    if selected_products and (comparison_context or any(term in body.message.casefold() for term in ("сравн", "выбран", "между"))):
+        products = selected_products
+    if application_data and application_data["product"]:
+        application_product = application_data["product"]
+        asks_for_other_products = any(term in body.message.casefold() for term in
+                                      ("другие", "альтернатив", "аналог", "сравн", "вариант", "кредитов", "продуктов"))
+        products = ([application_product] + [item for item in products if item["id"] != application_product["id"]][:2]
+                    if asks_for_other_products else [application_product])
+    company = company_dict(db.query(Company).filter_by(owner_id=user.id).first())
+    alternatives = product_alternatives(db, products, need, page.selected_product_ids if page else None,
+                                        company) if product_question or comparison_context else []
+    selected_with_fit = []
+    for item in selected_products:
+        if need and company and all(key in need for key in ("category", "amount", "term")):
+            reasons = product_fit_reasons(item, need, company)
+            selected_with_fit.append({**item, "fit_reasons": reasons, "fits": not reasons})
+        else:
+            selected_with_fit.append(item)
+    current_product = (
+        application_data["product"] if application_data else
+        selected_products[0] if selected_products else
+        products[0] if products else None
+    )
+    advisor_facts = advisor_context(
+        application_data["company"] if application_data else company,
+        need, current_product, application_data,
+    )
+    applications = db.query(LoanApplication).filter_by(owner_id=user.id).order_by(LoanApplication.updated_at.desc()).limit(10).all()
+    context = {
+        "company": company,
+        "applications": [{"id": item.id, "status": item.status, "productId": item.product_id,
+                          "need": {"purpose": item.purpose, "category": item.category,
+                                   "amount": item.amount, "term": item.term},
+                          "documents": [{"name": doc.name, "kind": doc.kind, "addedAt": doc.created_at.isoformat()}
+                                        for doc in item.documents]} for item in applications],
+        "page_context": {"page": page.page if page else "unknown", "selected_products": selected_with_fit,
+                         "need": need},
+        "alternatives": alternatives,
+        "advisor_context": advisor_facts,
+        "conversation": [item.model_dump() for item in body.history],
+        "comparison_facts": selected_with_fit if comparison_context else [],
+    }
+    verified_answer = (
+        verified_comparison(products, need, company)
+        if comparison_context and need and company and all(key in need for key in ("category", "amount", "term"))
+        else None
+    )
+    if comparison_context:
+        context["applications"] = []
+        context["alternatives"] = []
+        context["advisor_context"] = {"need": need}
+        context["verified_comparison"] = verified_answer
+    names = [
+        name for (name,) in db.query(CreditProduct.name).filter_by(active=True).all()
+    ]
+    answer = complete(body.message, products, application_data, names, context)
+    if answer and not advisor_answer_is_grounded(answer, advisor_facts):
+        answer = None
+    if verified_answer and answer and not comparison_answer_is_grounded(answer, products, need, company):
+        answer = None
+    fallback_products = (
+        [item for item in products if not product_fit_reasons(item, need, company)]
+        if comparison_context and need and company and all(key in need for key in ("category", "amount", "term"))
+        else products
+    )
     return {
-        "answer": text,
-        "mode": "deterministic-fallback",
+        "answer": humanize_status_codes(answer or verified_answer or advisor_fallback(advisor_facts, fallback_products, application_data)),
+        "mode": "local-llm" if answer else "verified-comparison" if verified_answer else "deterministic-fallback",
+        "sources": [
+            {
+                "id": product["id"],
+                "version": product["version"],
+                "name": product["name"],
+                "category": product["category"],
+            }
+            for product in products
+        ],
         "application": application_data,
+        "alternatives": alternatives,
     }

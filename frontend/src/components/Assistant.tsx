@@ -1,7 +1,18 @@
-import { createContext, useContext } from 'react';
-import { useWorkspace } from '../app/context';
+import { createContext, useContext, useState, type FormEvent } from 'react';
+import { api, type AssistantReply } from '../api';
+import { useApp, useWorkspace } from '../app/context';
 import { rub } from '../lib/format';
 import { Icon } from './ui';
+
+function MessageText({ text }: { text: string }) {
+  return <div className="assistant-message-text">{text.split('\n').map((line, lineIndex) => (
+    <p key={lineIndex}>{line.split(/(\*\*[^*]+\*\*)/g).map((part, partIndex) =>
+      part.startsWith('**') && part.endsWith('**')
+        ? <strong key={partIndex}>{part.slice(2, -2)}</strong>
+        : part,
+    )}</p>
+  ))}</div>;
+}
 
 export const AssistantContext = createContext<() => void>(() => {});
 export function AssistantToggle() {
@@ -13,21 +24,54 @@ export function AssistantToggle() {
   );
 }
 export function Assistant({ close }: { close: () => void }) {
+  const { route, selected, need } = useApp();
   const company = useWorkspace().company;
-  const questions = [
-    [
-      'Какие есть продукты?',
-      'В каталоге шесть демопредложений: кредиты на развитие, оборотные средства и овердрафты. Выберите цель и сумму, чтобы увидеть подходящие варианты.',
-    ],
-    [
-      'Какие данные нужны?',
-      'Для заявки нужны сведения о компании, цель, сумма, срок и документ по правилам выбранного предложения.',
-    ],
-    [
-      'Что означает статус?',
-      'Статус показывает текущий этап обработки. История всех переходов находится в деталях заявки.',
-    ],
-  ];
+  const [messages, setMessages] = useState<
+    { role: 'user' | 'assistant'; text: string; sources?: string[]; mode?: string; alternatives?: AssistantReply['alternatives'] }[]
+  >([
+    {
+      role: 'assistant',
+      text: 'Привет! Спросите о кредитных продуктах, документах или статусе заявки.',
+    },
+  ]);
+  const [input, setInput] = useState('');
+  const [busy, setBusy] = useState(false);
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const question = input.trim();
+    if (!question || busy) return;
+    setMessages((current) => [...current, { role: 'user', text: question }]);
+    setInput('');
+    setBusy(true);
+    try {
+      const reply = await api.assistant(
+        question,
+        ['application', 'result', 'contract'].includes(route.page) ? route.id : undefined,
+        { page: route.page, selected_product_ids: selected, need },
+        messages.slice(-6).map(({ role, text }) => ({ role, text })),
+      );
+      setMessages((current) => [
+        ...current,
+        {
+          role: 'assistant',
+          text: reply.answer,
+          sources: reply.sources?.map((source) => source.name) || [],
+          mode: reply.mode,
+          alternatives: reply.alternatives,
+        },
+      ]);
+    } catch (error) {
+      setMessages((current) => [
+        ...current,
+        {
+          role: 'assistant',
+          text: error instanceof Error ? error.message : 'Не удалось получить ответ.',
+        },
+      ]);
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <>
       <div className="assistant-scrim" onClick={close} />
@@ -38,7 +82,7 @@ export function Assistant({ close }: { close: () => void }) {
           </div>
           <div>
             <strong>Помощник</strong>
-            <span>Демо · справочная информация</span>
+            <span>Каталог кредитов и заявки</span>
           </div>
           <button
             type="button"
@@ -49,23 +93,46 @@ export function Assistant({ close }: { close: () => void }) {
             <Icon name="close" size={19} />
           </button>
         </div>
-        <div className="assistant-body">
-          <div className="assistant-bubble">
-            <strong>Привет! 👋</strong>
-            <p>
-              Помогу сориентироваться в кредитном кабинете. Ответы основаны на демоданных
-              приложения.
-            </p>
-          </div>
-          <span className="assistant-label">ЧАСТЫЕ ВОПРОСЫ</span>
-          {questions.map(([question, answer]) => (
-            <details className="assistant-question" key={question}>
-              <summary>
-                {question} <Icon name="chevron" size={16} />
-              </summary>
-              <p>{answer}</p>
-            </details>
+        <div className="assistant-body" aria-live="polite">
+          {messages.map((message, index) => (
+            <div
+              className={`assistant-bubble ${message.role === 'user' ? 'assistant-user' : ''}`}
+              key={index}
+            >
+              <span className="assistant-message-role">{message.role === 'user' ? 'Вы' : 'Помощник'}</span>
+              <MessageText text={message.text} />
+              {message.mode && (
+                <small>
+                  {message.mode === 'local-llm'
+                    ? 'Ответ настроенной ИИ-модели'
+                    : message.mode === 'verified-comparison'
+                    ? 'Проверенное сравнение по условиям каталога'
+                    : 'Справочный ответ без модели'}
+                </small>
+              )}
+              {message.sources && message.sources.length > 0 && (
+                <small>Источники: {message.sources.join(', ')}</small>
+              )}
+              {message.alternatives && message.alternatives.length > 0 && (
+                <div className="assistant-alternatives">
+                  <strong>Другие варианты</strong>
+                  {message.alternatives.map((item) => (
+                    <div className="assistant-alternative" key={item.product.id}>
+                      <b>{item.product.name}</b>
+                      <span>Плюсы: {item.pros.join('; ')}</span>
+                      <span>Минусы и условия: {item.cons.join('; ')}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
+          {busy && (
+            <div className="assistant-bubble">
+              <span className="assistant-message-role">Помощник</span>
+              <MessageText text="Формирую ответ…" />
+            </div>
+          )}
           <div className="assistant-context">
             <span>
               <Icon name="building" size={17} /> ВАША КОМПАНИЯ
@@ -78,9 +145,22 @@ export function Assistant({ close }: { close: () => void }) {
             </small>
           </div>
         </div>
+        <form className="assistant-input" onSubmit={submit}>
+          <input
+            aria-label="Вопрос помощнику"
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            placeholder="Спросите о кредите…"
+            maxLength={3000}
+            disabled={busy}
+          />
+          <button type="submit" disabled={busy || !input.trim()} aria-label="Отправить вопрос">
+            <Icon name="arrow" size={18} />
+          </button>
+        </form>
         <div className="assistant-foot">
-          <Icon name="info" size={16} /> AI-модель не подключена. Основной сценарий доступен
-          полностью.
+          <Icon name="info" size={16} /> Ответы справочные; решение формируют правила кредитного
+          конвейера.
         </div>
       </aside>
     </>

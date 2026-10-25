@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import { getSession, getAccount, login, logout, getApplication, type Need } from './mock-api';
+import { api, type BankApplication, type User } from './api';
+import type { Application, Company, Need, Product } from './mock-api';
 import { AppContext, defaultNeed, readRoute, type AppContextValue } from './app/context';
 import { Login } from './components/Login';
 import { Header } from './components/Header';
@@ -17,7 +18,12 @@ import { ContractPage } from './pages/Contract';
 import { BankDashboard } from './pages/BankDashboard';
 
 export function App() {
-  const [userId, setUserId] = useState<string | null>(() => getSession());
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [company, setCompany] = useState<Company | null>(null);
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [bankApplications, setBankApplications] = useState<BankApplication[]>([]);
   const [route, setRoute] = useState(readRoute);
   const [need, setNeed] = useState<Need>(defaultNeed);
   const [selected, setSelected] = useState<string[]>([]);
@@ -26,7 +32,30 @@ export function App() {
     message: string;
     error: boolean;
   } | null>(null);
-  const [, setRevision] = useState(0);
+  const refresh = async (account: User | null = user) => {
+    if (account?.role === 'employee') {
+      setBankApplications(await api.bankApplications());
+      return;
+    }
+    const [nextCompany, nextApplications, nextProducts] = await Promise.all([
+      api.company(),
+      api.applications(),
+      api.products(),
+    ]);
+    setCompany(nextCompany);
+    setApplications(nextApplications);
+    setProducts(nextProducts);
+  };
+  useEffect(() => {
+    api
+      .me()
+      .then(async (current) => {
+        await refresh(current);
+        setUser(current);
+      })
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
+  }, []);
   useEffect(() => {
     const handler = () => setRoute(readRoute());
     window.addEventListener('hashchange', handler);
@@ -37,49 +66,68 @@ export function App() {
     const timeout = window.setTimeout(() => setToast(null), 4500);
     return () => window.clearTimeout(timeout);
   }, [toast]);
+  useEffect(() => {
+    if (!user) return;
+    const update = () => {
+      if (document.visibilityState === 'visible') refresh(user).catch(() => {});
+    };
+    window.addEventListener('focus', update);
+    const interval = window.setInterval(update, 15000);
+    return () => {
+      window.removeEventListener('focus', update);
+      window.clearInterval(interval);
+    };
+  }, [user]);
   const go = (page: string, id?: string) => {
     location.hash = `/${page}${id ? `?id=${encodeURIComponent(id)}` : ''}`;
     setRoute(readRoute());
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
   const notice = (message: string, error = false) => setToast({ message, error });
-  const refresh = () => setRevision((value) => value + 1);
-  const run = (action: () => void) => {
+  const run = async (action: () => Promise<unknown> | void) => {
     try {
-      action();
+      await action();
     } catch (error) {
       notice(error instanceof Error ? error.message : 'Что-то пошло не так.', true);
     }
   };
   const loginUser = (email: string, password: string) =>
-    run(() => {
-      const account = login(email, password);
-      setUserId(account.id);
+    run(async () => {
+      const account = await api.login(email, password);
+      await refresh(account);
+      setUser(account);
       go(account.role === 'employee' ? 'bank' : 'home');
       notice(`Добро пожаловать, ${account.name.split(' ')[0]}!`);
     });
-  const logoutUser = () => {
-    logout();
-    setUserId(null);
-    setAssistantOpen(false);
-    go('home');
-  };
-  if (!userId)
+  const logoutUser = () =>
+    run(async () => {
+      await api.logout();
+      setUser(null);
+      setCompany(null);
+      setApplications([]);
+      setProducts([]);
+      setBankApplications([]);
+      setAssistantOpen(false);
+      go('home');
+    });
+  if (loading) return <div className="error-page">Загружаем кабинет…</div>;
+  if (!user)
     return (
       <>
         <Login onLogin={loginUser} />
         {toast && <Toast {...toast} />}
       </>
     );
-  if (getAccount(userId).role === 'employee')
+  if (user.role === 'employee')
     return (
       <>
         <BankDashboard
-          userId={userId}
+          user={user}
+          applications={bankApplications}
           applicationId={route.page === 'bank' ? route.id : ''}
           go={go}
           run={run}
-          refresh={refresh}
+          refresh={() => refresh(user)}
           notice={notice}
           onLogout={logoutUser}
         />
@@ -87,7 +135,10 @@ export function App() {
       </>
     );
   const value: AppContextValue = {
-    userId,
+    user,
+    company,
+    applications,
+    products,
     route,
     need,
     setNeed,
@@ -96,12 +147,15 @@ export function App() {
     go,
     run,
     notice,
-    refresh,
+    refresh: () => refresh(user),
   };
   let page: React.ReactNode;
   try {
-    if (['application', 'result', 'contract'].includes(route.page))
-      getApplication(userId, route.id);
+    if (
+      ['application', 'result', 'contract'].includes(route.page) &&
+      !applications.some((item) => item.id === route.id)
+    )
+      throw new Error('Заявка не найдена');
     page = (
       {
         home: <Home />,

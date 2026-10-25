@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { acceptOffer, signDemo } from '../mock-api';
-import { productById, rub } from '../lib/format';
+import { api } from '../api';
+import { rub } from '../lib/format';
 import { useApp, useApplication } from '../app/context';
 import { Button, Empty, Icon, Intro } from '../components/ui';
 
 export function ContractPage() {
-  const { userId, go, run, refresh, notice } = useApp();
+  const { products, go, run, refresh, notice } = useApp();
   const application = useApplication();
-  const product = productById(application.productId);
+  const product = products.find((item) => item.id === application.productId);
   const [checked, setChecked] = useState(false);
   if (!application.decision?.approved)
     return (
@@ -21,16 +21,16 @@ export function ContractPage() {
   const accepted = ['OFFER_ACCEPTED', 'SIGNED_DEMO', 'DISBURSED_DEMO'].includes(application.status);
   const signed = ['SIGNED_DEMO', 'DISBURSED_DEMO'].includes(application.status);
   const accept = () =>
-    run(() => {
+    run(async () => {
       if (!checked) throw new Error('Подтвердите ознакомление с условиями.');
-      acceptOffer(userId, application.id);
-      refresh();
+      await api.acceptOffer(application.id);
+      await refresh();
       notice('Демонстрационные условия приняты.');
     });
   const sign = () =>
-    run(() => {
-      signDemo(userId, application.id);
-      refresh();
+    run(async () => {
+      await api.signDemo(application.id);
+      await refresh();
       notice('Демо-договор подписан, демонстрационная выдача выполнена.');
     });
   return (

@@ -1,12 +1,12 @@
 import { categoryNames } from '../mock-api';
-import { productById, rub } from '../lib/format';
+import { rub } from '../lib/format';
 import { useApp, useApplication } from '../app/context';
 import { Button, Empty, Icon, Intro, PanelHeading } from '../components/ui';
 
 export function ResultPage() {
-  const { go } = useApp();
+  const { go, products } = useApp();
   const application = useApplication();
-  const product = productById(application.productId);
+  const product = products.find((item) => item.id === application.productId);
   if (!application.decision)
     return (
       <>
@@ -17,7 +17,11 @@ export function ResultPage() {
         </div>
         <Empty
           title="Решение ещё не готово"
-          message="Отправьте заявку и дождитесь решения сотрудника банка."
+          message={
+            application.status === 'DECISION_PENDING'
+              ? 'Проверка завершена. Ожидаем решения сотрудника банка.'
+              : 'Отправьте заявку для демонстрационной проверки.'
+          }
           label="Открыть заявку"
           onClick={() => go('application', application.id)}
         />

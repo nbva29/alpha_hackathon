@@ -1,9 +1,13 @@
-import { accounts } from '../mock-api';
 import { initials } from '../lib/format';
 import { values } from '../app/context';
 import { Brand, Eyebrow, Field, Button, Icon } from './ui';
 
 export function Login({ onLogin }: { onLogin: (email: string, password: string) => void }) {
+  const accounts = [
+    { id: 'anna', name: 'Анна Смирнова', email: 'anna@demo.local' },
+    { id: 'maxim', name: 'Максим Петров', email: 'maxim@demo.local' },
+    { id: 'bank', name: 'Мария Орлова', email: 'bank@demo.local' },
+  ];
   return (
     <div className="login-shell">
       <div className="login-art">
@@ -71,7 +75,7 @@ export function Login({ onLogin }: { onLogin: (email: string, password: string) 
                 key={account.id}
                 type="button"
                 className="demo-account"
-                onClick={() => onLogin(account.email, account.password)}
+                onClick={() => onLogin(account.email, 'demo123')}
               >
                 <span className={`demo-avatar ${index ? 'avatar-blue' : ''}`}>
                   {initials(account.name)}
@@ -79,7 +83,7 @@ export function Login({ onLogin }: { onLogin: (email: string, password: string) 
                 <span>
                   <strong>{account.name}</strong>
                   <small>
-                    {account.role === 'employee' ? 'Сотрудник банка' : 'Предприниматель'} ·{' '}
+                    {account.id === 'bank' ? 'Сотрудник банка' : 'Предприниматель'} ·{' '}
                     {account.email} · demo123
                   </small>
                 </span>

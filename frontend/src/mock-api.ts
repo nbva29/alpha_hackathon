@@ -56,7 +56,7 @@ export interface ApplicationDocument {
   mime: string;
   size: number;
   kind: DocumentKind;
-  data: string;
+  data?: string;
   addedAt: string;
 }
 export interface CheckResult {
@@ -64,6 +64,8 @@ export interface CheckResult {
   fns: string;
   bki: string;
   financial: string;
+  score?: number | null;
+  reasons?: string[];
 }
 export interface Decision {
   approved: boolean;
@@ -83,6 +85,7 @@ export interface Application {
   status: Status;
   productId: string;
   productVersion: string;
+  product?: Product | null;
   need: Need;
   company: Company;
   documents: ApplicationDocument[];

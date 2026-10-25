@@ -1,21 +1,14 @@
 import { useState } from 'react';
-import {
-  getAccount,
-  getBankApplications,
-  createDemoReviewApplication,
-  reviewApplication,
-  riskReasons,
-  statusNames,
-  type BankApplication,
-  type Status,
-} from '../mock-api';
-import { day, initials, productById, rub } from '../lib/format';
+import { api, type BankApplication, type User } from '../api';
+import { statusNames, type Status } from '../mock-api';
+import { day, initials, rub } from '../lib/format';
 import { Brand, Button, Icon, StatusPill } from '../components/ui';
 
 type Filter = 'pending' | 'all' | 'needs_info';
 
 export function BankDashboard({
-  userId,
+  user,
+  applications,
   applicationId,
   go,
   run,
@@ -23,18 +16,17 @@ export function BankDashboard({
   notice,
   onLogout,
 }: {
-  userId: string;
+  user: User;
+  applications: BankApplication[];
   applicationId: string;
   go: (page: string, id?: string) => void;
-  run: (action: () => void) => void;
-  refresh: () => void;
+  run: (action: () => Promise<unknown> | void) => Promise<void>;
+  refresh: () => Promise<void>;
   notice: (message: string, error?: boolean) => void;
   onLogout: () => void;
 }) {
   const [filter, setFilter] = useState<Filter>('all');
   const [comment, setComment] = useState('');
-  const account = getAccount(userId);
-  const applications = getBankApplications(userId);
   const visible = applications.filter((item) =>
     filter === 'all'
       ? true
@@ -52,11 +44,11 @@ export function BankDashboard({
     visible[0];
 
   const decide = (action: 'approve' | 'reject' | 'request_info') =>
-    run(() => {
+    run(async () => {
       if (!selected) return;
-      reviewApplication(userId, selected.ownerId, selected.application.id, action, comment);
+      await api.bankDecision(selected.application.id, action, comment);
       setComment('');
-      refresh();
+      await refresh();
       notice(
         action === 'approve'
           ? 'Заявка одобрена. Клиент увидит решение в своём кабинете.'
@@ -85,9 +77,9 @@ export function BankDashboard({
           {pending > 0 && <b>{pending}</b>}
         </button>
         <div className="bank-sidebar-account">
-          <span className="user-avatar">{initials(account.name)}</span>
+          <span className="user-avatar">{initials(user.name)}</span>
           <span className="bank-account-info">
-            <strong>{account.name}</strong>
+            <strong>{user.name}</strong>
             <small>Сотрудник банка</small>
           </span>
           <button className="icon-button" type="button" onClick={onLogout} aria-label="Выйти">
@@ -171,7 +163,7 @@ export function BankDashboard({
                       {borrowerName} · № {application.id}
                     </span>
                     <span>
-                      {productById(application.productId)?.name || 'Кредитное предложение'} ·{' '}
+                      {application.product?.name || 'Кредитное предложение'} ·{' '}
                       {rub(application.need.amount)}
                     </span>
                     <small>Обновлено {day(application.updatedAt)}</small>
@@ -188,22 +180,8 @@ export function BankDashboard({
             ) : (
               <div className="bank-empty">
                 <p>
-                  Отправленных заявок пока нет. Вы можете создать и отправить заявку из кабинета
-                  клиента или добавить демонстрационную заявку для проверки интерфейса сотрудника.
+                  Отправленных заявок пока нет. Они появятся после отправки из кабинета клиента.
                 </p>
-                <Button
-                  small
-                  onClick={() =>
-                    run(() => {
-                      const application = createDemoReviewApplication(userId);
-                      refresh();
-                      go('bank', application.id);
-                      notice('Демонстрационная заявка создана и ожидает решения.');
-                    })
-                  }
-                >
-                  Создать демозаявку
-                </Button>
               </div>
             )}
           </section>
@@ -245,8 +223,8 @@ function BankApplicationDetail({
   decide: (action: 'approve' | 'reject' | 'request_info') => void;
 }) {
   const { application, borrowerName } = item;
-  const product = productById(application.productId);
-  const risks = riskReasons(application);
+  const product = application.product;
+  const risks = application.checks.at(-1)?.reasons || [];
   const disposable =
     application.company.revenue - application.company.expenses - application.company.obligations;
   const pending = application.status === 'DECISION_PENDING';
@@ -279,7 +257,10 @@ function BankApplicationDetail({
             демопроверка не выявила рисков.
           </p>
           <div className="bank-actions">
-            <Button onClick={() => decide('approve')} disabled={risks.length > 0}>
+            <Button
+              onClick={() => decide('approve')}
+              disabled={(application.checks.at(-1)?.score || 0) < 50}
+            >
               Одобрить
             </Button>
             <Button variant="outline" onClick={() => decide('request_info')}>
@@ -380,7 +361,11 @@ function BankApplicationDetail({
         {application.documents.length ? (
           <div className="bank-documents">
             {application.documents.map((document) => (
-              <a key={document.id} href={document.data} download={document.name}>
+              <a
+                key={document.id}
+                href={api.bankDocumentUrl(application.id, document.id)}
+                download={document.name}
+              >
                 <Icon name="file" size={17} /> {document.name} <small>Скачать</small>
               </a>
             ))}

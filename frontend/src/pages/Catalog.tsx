@@ -1,21 +1,42 @@
-import { products, evaluateProduct, monthlyPayment, type Product } from '../mock-api';
-import { productById, rub } from '../lib/format';
+import { useEffect, useState } from 'react';
+import { api, type Recommendation } from '../api';
+import { monthlyPayment, type Product } from '../mock-api';
+import { rub } from '../lib/format';
 import { useApp, useWorkspace } from '../app/context';
 import { Button, Icon, Intro } from '../components/ui';
 import { Wizard } from '../components/Wizard';
 import { OfferCard } from '../components/OfferCard';
 
 export function CatalogPage() {
-  const { need, selected, setSelected, go } = useApp();
+  const { need, selected, setSelected, go, products } = useApp();
   const company = useWorkspace().company;
-  const scored = products
-    .map((product) => ({ product, ...evaluateProduct(product, need, company) }))
-    .sort((a, b) => Number(b.fits) - Number(a.fits));
-  const compared = selected.map(productById).filter((value): value is Product => Boolean(value));
+  const [scored, setScored] = useState<Recommendation[]>([]);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let active = true;
+    api
+      .recommendations(need)
+      .then((results) => {
+        if (active) {
+          setScored(results);
+          setError('');
+        }
+      })
+      .catch((failure) => {
+        if (active)
+          setError(failure instanceof Error ? failure.message : 'Не удалось загрузить предложения');
+      });
+    return () => {
+      active = false;
+    };
+  }, [need]);
+  const compared = selected
+    .map((id) => products.find((product) => product.id === id))
+    .filter((value): value is Product => Boolean(value));
   const best =
     compared.length > 1
       ? compared
-          .filter((product) => evaluateProduct(product, need, company).fits)
+          .filter((product) => scored.find((item) => item.product.id === product.id)?.fits)
           .sort(
             (a, b) =>
               monthlyPayment(need.amount, a.rate, need.term) -
@@ -35,6 +56,11 @@ export function CatalogPage() {
         }
       />
       <Wizard step={2} />
+      {error && (
+        <div className="alert alert-warn" role="alert">
+          {error}
+        </div>
+      )}
       <div className="catalog-summary">
         <div>
           <Icon name="wallet" size={22} />
@@ -59,7 +85,12 @@ export function CatalogPage() {
       </div>
       <div className="offer-grid">
         {scored.map(({ product }) => (
-          <OfferCard key={product.id} product={product} company={company} />
+          <OfferCard
+            key={product.id}
+            product={product}
+            company={company}
+            result={scored.find((item) => item.product.id === product.id)!}
+          />
         ))}
       </div>
       {compared.length > 0 && (
@@ -106,13 +137,15 @@ export function CatalogPage() {
                 <tr>
                   <td>Соответствие</td>
                   {compared.map((item) => {
-                    const evaluation = evaluateProduct(item, need, company);
+                    const evaluation = scored.find((result) => result.product.id === item.id);
                     return (
                       <td
                         key={item.id}
                         className={best?.id === item.id ? 'compare-best' : undefined}
                       >
-                        {evaluation.fits ? 'Подходит' : evaluation.reasons.join(', ')}
+                        {evaluation?.fits
+                          ? 'Подходит'
+                          : evaluation?.reasons.join(', ') || 'Проверка…'}
                       </td>
                     );
                   })}

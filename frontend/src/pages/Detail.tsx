@@ -1,20 +1,21 @@
 import * as React from 'react';
-import { saveDraft, submitApplication, evaluateProduct, statusNames } from '../mock-api';
-import { day, productById } from '../lib/format';
+import { api } from '../api';
+import { evaluateProduct, statusNames } from '../mock-api';
+import { day } from '../lib/format';
 import { useApp, useApplication, values } from '../app/context';
 import { Button, Field, Icon, Intro, PanelHeading, StatusPill } from '../components/ui';
 import { DocumentSection } from '../components/DocumentSection';
 
 export function DetailPage() {
-  const { userId, go, run, refresh, notice } = useApp();
+  const { products, go, run, refresh, notice } = useApp();
   const application = useApplication();
-  const product = productById(application.productId);
+  const product = products.find((item) => item.id === application.productId);
   if (!product) throw new Error('Предложение для заявки не найдено.');
   const editable = application.status === 'DRAFT' || application.status === 'NEEDS_INFO';
   const save = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = values(event.currentTarget);
-    run(() => {
+    run(async () => {
       const company = {
         ...application.company,
         name: String(data.name),
@@ -31,20 +32,20 @@ export function DetailPage() {
         amount: Number(data.amount),
         term: Number(data.term),
       };
-      saveDraft(userId, application.id, { need, company });
-      refresh();
+      await api.saveDraft(application.id, need, company);
+      await refresh();
       notice('Изменения в заявке сохранены.');
     });
   };
   const submit = () =>
-    run(() => {
-      const result = submitApplication(userId, application.id);
-      refresh();
+    run(async () => {
+      const result = await api.submit(application.id);
+      await refresh();
       if (result.status === 'NEEDS_INFO')
         notice('Для продолжения нужен документ. Причина указана в заявке.', true);
       else {
         go('result', application.id);
-        notice('Заявка передана сотруднику банка на рассмотрение.');
+        notice('Проверка завершена. Заявка ожидает решения сотрудника банка.');
       }
     });
   const eligibility = evaluateProduct(product, application.need, application.company);

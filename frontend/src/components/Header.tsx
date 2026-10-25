@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { getAccount } from '../mock-api';
 import { initials } from '../lib/format';
 import { useApp } from '../app/context';
 import { Brand, Icon, type IconName } from './ui';
@@ -18,8 +17,7 @@ export function Header({
   children: React.ReactNode;
   onLogout: () => void;
 }) {
-  const { userId, route } = useApp();
-  const account = getAccount(userId);
+  const { user: account, route } = useApp();
   const current = ['application', 'result', 'contract'].includes(route.page)
     ? 'applications'
     : route.page === 'catalog'

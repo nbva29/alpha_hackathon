@@ -1,0 +1,52 @@
+# THIRD_PARTY_NOTICES
+
+Этот файл описывает сторонние компоненты и демонстрационные источники проекта. Точные версии Python-зависимостей находятся в `backend/requirements.txt` и `bank-mock/requirements.txt`; версии frontend-зависимостей и их транзитивных пакетов — в `frontend/package-lock.json`.
+
+## Библиотеки приложения
+
+| Компонент | Использование | Версия / источник |
+| --- | --- | --- |
+| FastAPI | HTTP API backend и bank-mock | 0.115.12 / https://github.com/fastapi/fastapi |
+| Uvicorn | ASGI-сервер | 0.34.2 / https://github.com/encode/uvicorn |
+| SQLAlchemy | ORM и доступ к БД | 2.0.40 / https://www.sqlalchemy.org/ |
+| Psycopg | PostgreSQL-драйвер | 3.2.6 / https://www.psycopg.org/psycopg3/ |
+| Pydantic и pydantic-settings | Схемы и конфигурация | Pydantic 2.11.3 в bank-mock; pydantic-settings 2.8.1 в backend / https://docs.pydantic.dev/ |
+| python-multipart | Загрузка документов | 0.0.20 / https://github.com/Kludex/python-multipart |
+| HTTPX | Вызовы bank-mock и необязательного OpenAI-совместимого LLM API | 0.28.1 / https://www.python-httpx.org/ |
+| React, React DOM | Интерфейс | 19.3.1 / https://react.dev/ |
+| Vite | Сборка интерфейса | 6.4.4 / https://vite.dev/ |
+| TypeScript | Типизация интерфейса | 5.9.3 / https://www.typescriptlang.org/ |
+| Prettier, @types/react, @types/react-dom | Инструменты разработки | версии в `frontend/package.json` и `package-lock.json` |
+| pytest, Black | Тесты и форматирование Python | ограничения версий в `backend/requirements-dev.txt` |
+
+## Runtime и сервисы
+
+| Компонент | Использование | Версия / источник |
+| --- | --- | --- |
+| Python | Backend и bank-mock | Docker-образ `python:3.12-slim` / https://www.python.org/ |
+| Node.js | Сборка frontend | Docker-образ `node:22-alpine` / https://nodejs.org/ |
+| Nginx | Раздача frontend | Docker-образ `nginx:1.27-alpine` / https://nginx.org/ |
+| PostgreSQL | Хранение данных в Compose | Docker-образ `postgres:16-alpine` / https://www.postgresql.org/ |
+| Ollama | Необязательный локальный inference в Compose | Docker-образ `ollama/ollama:0.40.10` / https://ollama.com/ |
+| LM Studio | Необязательный внешний локальный inference при разработке; в репозиторий не входит | Версию выбирает разработчик / https://lmstudio.ai/ |
+
+## Модель и данные
+
+| Компонент | Использование | Источник |
+| --- | --- | --- |
+| Qwen3 4B Instruct, Q4_K_M | Рекомендуемая локальная языковая модель; веса скачиваются отдельно, не включены в репозиторий | https://ollama.com/library/qwen3:4b-instruct ; лицензия Apache-2.0 |
+| Qwen3-4B-Instruct-2507 GGUF, Q4_K_M (Unsloth) | Локальная модель, проверенная через LM Studio; веса уже находятся на машине разработчика и не включены в репозиторий | https://huggingface.co/unsloth/Qwen3-4B-Instruct-2507-GGUF ; лицензия Apache-2.0 |
+| Qwen3 1.7B, Q4_K_M | Необязательная более лёгкая замена | https://ollama.com/library/qwen3:1.7b ; лицензия Apache-2.0 |
+| Qwen2.5-7B-Instruct | Допустимый пример другой модели с открытыми весами для сервера эксперта; не входит в репозиторий и не является зависимостью основного сценария | https://huggingface.co/Qwen/Qwen2.5-7B-Instruct ; лицензия Apache-2.0 |
+| Демонстрационные профили, каталог и заявки | Синтетические данные, созданные командой для проверки сценариев; не обучающий датасет | `backend/app/main.py`, `backend/app/services/catalog.py`, `frontend/src/mock-api.ts` |
+
+Сторонние датасеты в приложении не используются. Веса моделей не используются для обучения или дообучения в этом проекте.
+
+## Смоделированные интеграции
+
+- `bank-mock` — локальная имитация банковских проверок и решения; не внешний банковский сервис.
+- ФНС, БКИ и финансовый источник — синтетические ответы внутри `bank-mock`; реальные запросы к этим организациям не выполняются.
+- Демо-подписание и `DISBURSED_DEMO` — локальная имитация, без платёжных систем и движения денег.
+- Ставки и условия каталога — синтетические, не действующие предложения Альфа-Банка.
+- По умолчанию inference выполняется локально через LM Studio/Ollama или заменяется справочным ответом; внешний AI API не требуется.
+- Эксперт может отдельно настроить HTTPS endpoint для модели с открытыми весами; он не требуется для проверки основного пути. В текущем MVP нет модели распознавания содержимого банковских выписок.

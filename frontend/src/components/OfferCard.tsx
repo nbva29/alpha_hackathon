@@ -1,21 +1,25 @@
-import {
-  createApplication,
-  evaluateProduct,
-  categoryNames,
-  type Product,
-  type Company,
-} from '../mock-api';
+import { api, type Recommendation } from '../api';
+import { categoryNames, type Product, type Company } from '../mock-api';
 import { rub } from '../lib/format';
 import { useApp } from '../app/context';
 import { Button, Icon } from './ui';
 
-export function OfferCard({ product, company }: { product: Product; company: Company | null }) {
-  const { userId, need, selected, setSelected, go, run, notice } = useApp();
-  const result = evaluateProduct(product, need, company);
+export function OfferCard({
+  product,
+  company,
+  result,
+}: {
+  product: Product;
+  company: Company | null;
+  result: Recommendation;
+}) {
+  const { need, selected, setSelected, go, run, notice, refresh } = useApp();
   const compared = selected.includes(product.id);
   const choose = () =>
-    run(() => {
-      const application = createApplication(userId, need, product.id);
+    run(async () => {
+      if (!company) throw new Error('Заполните профиль компании перед созданием заявки.');
+      const application = await api.createApplication(need, product.id);
+      await refresh();
       go('application', application.id);
       notice('Черновик заявки создан.');
     });
@@ -84,7 +88,7 @@ export function OfferCard({ product, company }: { product: Product; company: Com
           >
             {compared ? 'Убрать из сравнения' : 'Сравнить'}
           </Button>
-          <Button small onClick={choose}>
+          <Button small onClick={choose} disabled={!result.fits || !company}>
             Выбрать <Icon name="arrow" size={16} />
           </Button>
         </div>

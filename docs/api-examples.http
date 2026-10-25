@@ -19,6 +19,15 @@ GET {{base}}/api/credit-products
 ### Company profile
 GET {{base}}/api/companies/me
 
+### Local LLM assistant with catalog RAG (requires local model or falls back)
+POST {{base}}/api/assistant
+Content-Type: application/json
+X-CSRF-Token: {{csrf}}
+
+{
+  "message": "Какие документы нужны для овердрафта?"
+}
+
 ### Create a draft
 POST {{base}}/api/applications
 Content-Type: application/json
@@ -37,6 +46,28 @@ X-CSRF-Token: {{csrf}}
 ### Submit draft (replace application id)
 POST {{base}}/api/applications/AH-REPLACE/submit
 X-CSRF-Token: {{csrf}}
+
+### Employee login (save new cookie and CSRF token)
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "bank@demo.local",
+  "password": "demo123"
+}
+
+### Employee queue
+GET {{base}}/api/bank/applications
+
+### Employee decision (use employee CSRF token)
+POST {{base}}/api/bank/applications/AH-REPLACE/decision
+Content-Type: application/json
+X-CSRF-Token: {{csrf}}
+
+{
+  "action": "approve",
+  "comment": "Проверки пройдены"
+}
 
 ### Logout
 POST {{base}}/api/auth/logout

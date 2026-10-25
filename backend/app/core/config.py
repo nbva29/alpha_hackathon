@@ -23,5 +23,12 @@ class Settings(BaseSettings):
     max_upload_bytes: int = 1_048_576
     demo_seed_password: str = "demo123"
 
+    # Use a running LM Studio server by default; fallback remains available when absent.
+    ai_base_url: str = "http://127.0.0.1:1234/v1"
+    ai_model: str = "qwen3-4b-instruct-2507"
+    ai_api_key: str = ""
+    ai_allow_remote: bool = False
+    ai_timeout_seconds: float = 30.0
+
 
 settings = Settings()

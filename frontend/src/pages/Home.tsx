@@ -1,13 +1,12 @@
-import { getAccount } from '../mock-api';
 import { day } from '../lib/format';
 import { useApp, useWorkspace } from '../app/context';
 import { Button, Empty, Icon, Intro, type IconName } from '../components/ui';
 import { ApplicationList } from '../components/ApplicationList';
 
 export function Home() {
-  const { userId, go } = useApp();
+  const { user, go } = useApp();
   const { company, applications } = useWorkspace();
-  const firstName = getAccount(userId).name.split(' ')[0];
+  const firstName = user.name.split(' ')[0];
   const active = applications.filter(
     (item) => !['DISBURSED_DEMO', 'REJECTED'].includes(item.status),
   );

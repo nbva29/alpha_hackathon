@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { addDocument, removeDocument, type Application, type Product } from '../mock-api';
+import { api } from '../api';
+import type { Application, Product } from '../mock-api';
 import { day } from '../lib/format';
 import { useApp } from '../app/context';
 import { Icon, PanelHeading } from './ui';
@@ -13,7 +14,7 @@ export function DocumentSection({
   product: Product;
   editable: boolean;
 }) {
-  const { userId, run, refresh, notice } = useApp();
+  const { run, refresh, notice } = useApp();
   const label = product.document === 'statement' ? 'Выписка по счёту' : 'Финансовая отчётность';
   const upload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -24,30 +25,11 @@ export function DocumentSection({
         file.size > 1024 * 1024
       )
         throw new Error('Загрузите PDF, PNG или JPG размером до 1 МБ.');
-      const data = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result));
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      addDocument(userId, application.id, {
-        name: file.name,
-        mime: file.type,
-        size: file.size,
-        kind: product.document,
-        data,
-      });
-      refresh();
+      await api.uploadDocument(application.id, product.document, file);
+      await refresh();
       notice('Документ добавлен к заявке.');
     } catch (error) {
-      notice(
-        error instanceof DOMException && error.name === 'QuotaExceededError'
-          ? 'В браузере закончилось место для демодокументов.'
-          : error instanceof Error
-            ? error.message
-            : 'Не удалось загрузить документ.',
-        true,
-      );
+      notice(error instanceof Error ? error.message : 'Не удалось загрузить документ.', true);
     }
   };
   return (
@@ -83,9 +65,9 @@ export function DocumentSection({
                   className="icon-button"
                   aria-label="Удалить документ"
                   onClick={() =>
-                    run(() => {
-                      removeDocument(userId, application.id, document.id);
-                      refresh();
+                    run(async () => {
+                      await api.deleteDocument(application.id, document.id);
+                      await refresh();
                       notice('Документ удалён.');
                     })
                   }

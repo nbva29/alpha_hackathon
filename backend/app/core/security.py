@@ -123,3 +123,9 @@ def entrepreneur(user: User = Depends(current_session)):
     if user.role != "entrepreneur":
         raise HTTPException(status_code=403, detail="Недостаточно прав")
     return user
+
+
+def employee(user: User = Depends(current_session)):
+    if user.role != "employee":
+        raise HTTPException(status_code=403, detail="Доступно только сотруднику банка")
+    return user

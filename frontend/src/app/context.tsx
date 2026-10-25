@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { createContext, useContext } from 'react';
-import { getWorkspace, getApplication, type Need } from '../mock-api';
+import type { Application, Company, Need, Product } from '../mock-api';
+import type { User } from '../api';
 
 export const defaultNeed: Need = {
   purpose: 'Закупка оборудования',
@@ -17,16 +18,19 @@ export const readRoute = () => {
 };
 
 export interface AppContextValue {
-  userId: string;
+  user: User;
+  company: Company | null;
+  applications: Application[];
+  products: Product[];
   route: ReturnType<typeof readRoute>;
   need: Need;
   setNeed: (value: Need) => void;
   selected: string[];
   setSelected: React.Dispatch<React.SetStateAction<string[]>>;
   go: (page: string, id?: string) => void;
-  run: (action: () => void) => void;
+  run: (action: () => Promise<unknown> | void) => Promise<void>;
   notice: (message: string, error?: boolean) => void;
-  refresh: () => void;
+  refresh: () => Promise<void>;
 }
 export const AppContext = createContext<AppContextValue | null>(null);
 export function useApp() {
@@ -35,11 +39,14 @@ export function useApp() {
   return value;
 }
 export function useWorkspace() {
-  return getWorkspace(useApp().userId);
+  const { company, applications } = useApp();
+  return { company, applications };
 }
 export function useApplication() {
-  const { userId, route } = useApp();
-  return getApplication(userId, route.id);
+  const { applications, route } = useApp();
+  const application = applications.find((item) => item.id === route.id);
+  if (!application) throw new Error('Заявка не найдена');
+  return application;
 }
 export function values(form: HTMLFormElement) {
   return Object.fromEntries(new FormData(form).entries());

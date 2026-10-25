@@ -47,7 +47,25 @@ class ApplicationPatch(BaseModel):
 class AssistantIn(BaseModel):
     message: str = Field(min_length=1, max_length=3000)
     application_id: str | None = None
+    page_context: "AssistantPageContext | None" = None
+    history: list["AssistantHistoryMessage"] = Field(default_factory=list, max_length=8)
+
+
+class AssistantHistoryMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    text: str = Field(min_length=1, max_length=3000)
+
+
+class AssistantPageContext(BaseModel):
+    page: str = Field(default="home", max_length=40)
+    selected_product_ids: list[str] = Field(default_factory=list, max_length=3)
+    need: NeedIn | None = None
 
 
 class DecisionAccept(BaseModel):
     accepted: bool = True
+
+
+class BankDecisionIn(BaseModel):
+    action: Literal["approve", "reject", "request_info"]
+    comment: str = Field(default="", max_length=1000)
